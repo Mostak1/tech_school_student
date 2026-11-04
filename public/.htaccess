@@ -1,0 +1,39 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Disable directory listing
+  Options -Indexes
+
+  # Deep Link Support for Auth Page
+  # Ensure /student/auth/* maps to the auth page HTML, not the root index.html
+  RewriteCond %{REQUEST_URI} ^/student/auth/
+  RewriteRule ^student/auth/.*$ /student/auth.html [L]
+
+  # Handle Directory/File Conflict (e.g., /student/chats/ vs /student/chats.html)
+  # If request is a directory (or has trailing slash)
+  # AND a corresponding .html file exists, serve the .html file
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_URI} ^(.+)/$
+  RewriteCond %{DOCUMENT_ROOT}%1.html -f
+  RewriteRule ^ %1.html [L]
+
+  # Serve resources from the out directory if they exist (extensionless to .html)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+
+  # Clean URLs: redirect .html to extensionless
+  RewriteCond %{THE_REQUEST} \s/+(.+?)\.html\s [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # Force trailing slash removal for consistency?
+  # RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+  # SPA Fallback: If no file/dir match, render index.html
+  # But be careful not to loop.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
