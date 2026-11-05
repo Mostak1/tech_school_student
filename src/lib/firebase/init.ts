@@ -31,6 +31,17 @@ const firebaseConfig = {
 };
 
 /**
+ * Check if required Firebase configuration is present
+ */
+export function isFirebaseConfigured(): boolean {
+  return Boolean(
+    firebaseConfig.apiKey &&
+    firebaseConfig.projectId &&
+    firebaseConfig.appId
+  );
+}
+
+/**
  * VAPID key for web push notifications
  * This key is used to identify your app to Firebase
  */
@@ -88,11 +99,13 @@ function loadFirebaseScripts(): Promise<void> {
  * Initialize Firebase app
  */
 export async function initializeFirebase(): Promise<void> {
-  // console.log('[FCM] Initializing Firebase...');
-
   // Return if already initialized
   if (isInitialized) {
-    // console.log('[FCM] Firebase already initialized');
+    return;
+  }
+
+  // Check if Firebase configuration is provided
+  if (!isFirebaseConfigured()) {
     return;
   }
 
@@ -142,7 +155,9 @@ export async function initializeFirebase(): Promise<void> {
  */
 export async function getFCMToken(): Promise<string | null> {
   try {
-    // console.log('[FCM] Getting FCM token...');
+    if (!isFirebaseConfigured()) {
+      return null;
+    }
 
     // Initialize Firebase if not already done
     if (!isInitialized) {

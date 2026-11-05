@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import {
   initializeFirebase,
   onForegroundMessage,
+  isFirebaseConfigured,
   FirebaseMessagePayload,
 } from './init';
 
@@ -33,6 +34,10 @@ export function useForegroundNotifications(
     // Setup function
     async function setupForegroundNotifications() {
       try {
+        if (!isFirebaseConfigured()) {
+          return;
+        }
+
         // Initialize Firebase first
         await initializeFirebase();
         // console.log('[FCM] Firebase initialized for foreground notifications');

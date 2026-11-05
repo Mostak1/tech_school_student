@@ -37,8 +37,16 @@ const firebaseConfig = {
 
 // Initialize Firebase
 try {
-  firebase.initializeApp(firebaseConfig);
-  // console.log('[SW] ✅ Firebase initialized');
+  const isConfigured = Boolean(
+    firebaseConfig.apiKey &&
+    firebaseConfig.projectId &&
+    firebaseConfig.appId &&
+    !firebaseConfig.projectId.includes('xxx')
+  );
+  if (isConfigured) {
+    firebase.initializeApp(firebaseConfig);
+    // console.log('[SW] ✅ Firebase initialized');
+  }
 } catch (error) {
   console.error('[SW] ❌ Error initializing Firebase:', error);
 }

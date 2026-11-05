@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { getFCMToken, initializeFirebase } from './init';
+import { getFCMToken, initializeFirebase, isFirebaseConfigured } from './init';
 
 /**
  * Hook to get FCM token
@@ -29,6 +29,12 @@ export function useFCMToken() {
     try {
       if (isMountedRef.current) setIsLoading(true);
       if (isMountedRef.current) setError(null);
+
+      // Check if Firebase is configured
+      if (!isFirebaseConfigured()) {
+        if (isMountedRef.current) setIsLoading(false);
+        return null;
+      }
 
       // Check if browser supports notifications
       if (typeof window === 'undefined' || !('Notification' in window)) {

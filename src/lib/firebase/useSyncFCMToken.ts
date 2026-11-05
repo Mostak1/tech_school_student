@@ -17,7 +17,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { initializeFirebase, getFCMToken } from './init';
+import { initializeFirebase, getFCMToken, isFirebaseConfigured } from './init';
 import { RootState } from '@/components/store';
 
 // Storage key for last known FCM token
@@ -69,6 +69,10 @@ export function useSyncFCMToken() {
     // Function to check FCM token
     async function checkFCMToken() {
       try {
+        if (!isFirebaseConfigured()) {
+          return;
+        }
+
         isCheckingRef.current = true;
         // console.log('[FCM Monitor] Checking FCM token...');
 
