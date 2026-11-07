@@ -86,7 +86,16 @@ import {
   getIdCard,
   getStudentReport,
   getSemesters,
+  createTuitionRequest,
+  getMyTuitionRequests,
+  getPostApplicants,
+  submitTutorReview,
+  selectPostApplicant,
 } from './functions';
+import type {
+  CreateTuitionRequestPayload,
+  TutorReview,
+} from '@/types/student';
 import {
   loginStart,
   loginSuccess,
@@ -1677,3 +1686,79 @@ export function useGetStudentReport(classSubjectId?: number) {
     retry: 1,
   });
 }
+
+/**
+ * Tuition Media Query Hooks
+ */
+
+/**
+ * Hook to create a new tuition request / requirement post
+ */
+export function useCreateTuitionRequest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateTuitionRequestPayload) => createTuitionRequest(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'my-tuitions'] });
+    },
+  });
+}
+
+/**
+ * Hook to fetch all tuition requests created by the student / guardian
+ */
+export function useGetMyTuitionRequests() {
+  return useQuery({
+    queryKey: ['student', 'my-tuitions'],
+    queryFn: () => getMyTuitionRequests(),
+    staleTime: 60 * 1000, // 1 minute
+    retry: 1,
+  });
+}
+
+/**
+ * Hook to fetch applicant tutors for a given tuition post
+ */
+export function useGetPostApplicants(postId: number | string, enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['student', 'tuition-applicants', postId],
+    queryFn: () => getPostApplicants(postId),
+    enabled: Boolean(postId) && enabled,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+}
+
+/**
+ * Hook to submit rating and review for an assigned tutor
+ */
+export function useSubmitTutorReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: TutorReview) => submitTutorReview(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'teachers'] });
+      queryClient.invalidateQueries({ queryKey: ['student', 'my-tuitions'] });
+    },
+  });
+}
+
+/**
+ * Hook to confirm / select an applicant tutor
+ */
+export function useSelectPostApplicant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, applicationId }: { postId: number | string; applicationId: number | string }) =>
+      selectPostApplicant(postId, applicationId),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'my-tuitions'] });
+      queryClient.invalidateQueries({ queryKey: ['student', 'tuition-applicants', variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ['student', 'teachers'] });
+    },
+  });
+}
+

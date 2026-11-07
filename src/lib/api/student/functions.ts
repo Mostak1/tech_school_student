@@ -32,8 +32,15 @@ import {
   API_BASE_URL,
   CERTIFICATE_ENDPOINTS,
   ID_CARD_ENDPOINTS,
-  LANGUAGE_ENDPOINTS
+  LANGUAGE_ENDPOINTS,
+  TUITION_ENDPOINTS
 } from './endpoints';
+import type {
+  TuitionPost,
+  TuitionApplication,
+  TutorReview,
+  CreateTuitionRequestPayload,
+} from '@/types/student';
 
 // Types for student login
 export interface StudentLoginRequest {
@@ -3003,6 +3010,7 @@ export interface SchoolSettingsResponse {
   error: boolean;
   message: string;
   data: {
+    institute_type?: 'school' | 'coaching' | 'tuition_media' | string;
     settings?: {
       footer_text?: string; // Footer text from school settings
       primary_color?: string; // Primary color from school settings (e.g., "#22577a")
@@ -3010,6 +3018,7 @@ export interface SchoolSettingsResponse {
       online_exam_terms_condition?: string; // Online exam rules HTML/text
       google_map_link?: string; // Google Maps embed src for the school location
       google_maps_api_key?: string; // Base64-encoded Google Maps API key
+      institute_type?: 'school' | 'coaching' | 'tuition_media' | string;
       [key: string]: unknown; // Allow other properties in the settings object
     };
     [key: string]: unknown; // Allow other properties in the data object
@@ -3071,11 +3080,13 @@ export async function getSchoolSettings(): Promise<{
   success: boolean;
   message: string;
   data: {
+    institute_type?: 'school' | 'coaching' | 'tuition_media' | string;
     settings?: {
       footer_text?: string;
       primary_color?: string;
       secondary_color?: string;
       online_exam_terms_condition?: string;
+      institute_type?: 'school' | 'coaching' | 'tuition_media' | string;
       [key: string]: unknown;
     };
     [key: string]: unknown;
@@ -5120,3 +5131,103 @@ export async function setLanguageApi(
   );
   return response.data;
 }
+
+// ==========================================
+// Tuition Media Functions & Responses
+// ==========================================
+
+export interface CreateTuitionRequestResponse {
+  success?: boolean;
+  error?: boolean;
+  message: string;
+  data?: {
+    id: number;
+    job_code: string;
+    status: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface GetMyTuitionRequestsResponse {
+  success?: boolean;
+  error?: boolean;
+  message?: string;
+  data: TuitionPost[];
+}
+
+export interface GetPostApplicantsResponse {
+  success?: boolean;
+  error?: boolean;
+  message?: string;
+  data: TuitionApplication[];
+}
+
+export interface SubmitTutorReviewResponse {
+  success?: boolean;
+  error?: boolean;
+  message: string;
+  data?: unknown;
+}
+
+/**
+ * Create a new tuition request / requirement post
+ */
+export async function createTuitionRequest(
+  payload: CreateTuitionRequestPayload
+): Promise<CreateTuitionRequestResponse> {
+  const response = await studentApi.post<CreateTuitionRequestResponse>(
+    TUITION_ENDPOINTS.CREATE_REQUEST,
+    payload
+  );
+  return response.data;
+}
+
+/**
+ * Fetch all tuition requests posted by the student / guardian
+ */
+export async function getMyTuitionRequests(): Promise<GetMyTuitionRequestsResponse> {
+  const response = await studentApi.get<GetMyTuitionRequestsResponse>(
+    TUITION_ENDPOINTS.GET_MY_REQUESTS
+  );
+  return response.data;
+}
+
+/**
+ * Fetch applicant tutors for a specific tuition request post
+ */
+export async function getPostApplicants(
+  postId: number | string
+): Promise<GetPostApplicantsResponse> {
+  const response = await studentApi.get<GetPostApplicantsResponse>(
+    TUITION_ENDPOINTS.GET_POST_APPLICANTS(postId)
+  );
+  return response.data;
+}
+
+/**
+ * Submit star rating and review feedback for a tutor
+ */
+export async function submitTutorReview(
+  payload: TutorReview
+): Promise<SubmitTutorReviewResponse> {
+  const response = await studentApi.post<SubmitTutorReviewResponse>(
+    TUITION_ENDPOINTS.SUBMIT_REVIEW,
+    payload
+  );
+  return response.data;
+}
+
+/**
+ * Confirm / Shortlist / Select an applicant for a tuition post
+ */
+export async function selectPostApplicant(
+  postId: number | string,
+  applicationId: number | string
+): Promise<{ success: boolean; message: string; data?: unknown }> {
+  const response = await studentApi.post<{ success: boolean; message: string; data?: unknown }>(
+    TUITION_ENDPOINTS.SELECT_APPLICANT(postId),
+    { application_id: applicationId }
+  );
+  return response.data;
+}
+

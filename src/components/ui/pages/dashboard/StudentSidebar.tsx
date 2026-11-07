@@ -30,9 +30,13 @@ import {
   BiInfoCircle,
   BiSupport,
   BiAward,
+  BiUserPlus,
+  BiUserCheck,
+  BiCreditCard,
 } from 'react-icons/bi';
 import { LuNotebook } from 'react-icons/lu';
 import { useGetSchoolSettings } from '@/lib/api/student/queryHooks';
+import { useInstituteType } from '@/hooks/useInstituteType';
 
 interface StudentSidebarProps {
   collapsed: boolean;
@@ -53,6 +57,8 @@ export default function StudentSidebar({
 
   // Get language state and functions from Redux
   const { changeLanguage, currentLanguageName, languages } = useLanguage();
+  // Fetch institute type to dynamically adjust modules for Tuition Media vs School mode
+  const { isTuitionMedia } = useInstituteType();
   // Fetch the dynamic school logo once; reuse everywhere so desktop and mobile match backend branding
   const { data: schoolSettings, isLoading: isLoadingLogo } =
     useGetSchoolSettings();
@@ -102,6 +108,22 @@ export default function StudentSidebar({
       featureRequired: null, // Always show home/dashboard
     },
     {
+      id: 'request-tutor',
+      label: translate('requestTutor') || 'Request a Tutor (গৃহশিক্ষক রিকোয়েস্ট)',
+      icon: BiUserPlus,
+      route: '/student/request-tutor',
+      featureRequired: null,
+      tuitionMediaOnly: true,
+    },
+    {
+      id: 'my-tuition-posts',
+      label: translate('myTuitions') || 'My Tuition Posts (আমার পোস্টসমূহ)',
+      icon: BiClipboard,
+      route: '/student/my-tuitions',
+      featureRequired: null,
+      tuitionMediaOnly: true,
+    },
+    {
       id: 'subjects',
       label: translate('mySubjects'),
       icon: BiBookOpen,
@@ -116,11 +138,30 @@ export default function StudentSidebar({
       featureRequired: 'Assignment Management', // Feature ID: 11
     },
     {
+      id: 'teachers',
+      label: isTuitionMedia
+        ? (translate('myTutors') || 'My Tutors (আমার গৃহশিক্ষকগণ)')
+        : translate('teachers'),
+      icon: isTuitionMedia ? BiUserCheck : BiGroup,
+      route: '/student/teachers',
+      featureRequired: isTuitionMedia ? null : 'Teacher Management', // Feature ID: 4
+    },
+    {
       id: 'chats',
-      label: translate('chats'),
+      label: isTuitionMedia
+        ? (translate('tutorMessaging') || 'Tutor Messaging (শিক্ষকের সাথে বার্তালাপ)')
+        : translate('chats'),
       icon: BiChat,
       route: '/student/chats',
-      featureRequired: 'Chat Module', // Feature ID: 20
+      featureRequired: isTuitionMedia ? null : 'Chat Module', // Feature ID: 20
+    },
+    {
+      id: 'tuition-fees',
+      label: translate('tuitionFees') || 'Tuition Bills (টিউশন সম্মানী ও ফি)',
+      icon: BiCreditCard,
+      route: '/student/tuition-fees',
+      featureRequired: null,
+      tuitionMediaOnly: true,
     },
     {
       id: 'timetable',
@@ -171,13 +212,6 @@ export default function StudentSidebar({
       icon: BiBus,
       route: '/student/transportation',
       featureRequired: 'Transportation Module', // Feature ID: 21
-    },
-    {
-      id: 'teachers',
-      label: translate('teachers'),
-      icon: BiGroup,
-      route: '/student/teachers',
-      featureRequired: 'Teacher Management', // Feature ID: 4
     },
     {
       id: 'holiday',
@@ -244,9 +278,29 @@ export default function StudentSidebar({
     },
   ];
 
-  // Filter navigation items based on enabled features
-  // Only show items where the required feature is enabled or no feature is required
+  // Modules that must be hidden when isTuitionMedia is true
+  const hiddenInTuitionMedia = new Set([
+    'transportation',
+    'timetable',
+    'exams',
+    'result',
+    'certificate',
+    'diary',
+    'holiday',
+  ]);
+
+  // Filter navigation items based on mode and enabled features
   const navigationItems = allNavigationItems.filter((item) => {
+    // Hide school-specific modules when in Tuition Media mode
+    if (isTuitionMedia && hiddenInTuitionMedia.has(item.id)) {
+      return false;
+    }
+
+    // Hide tuition-media-specific items when not in tuition media mode
+    if (!isTuitionMedia && (item as { tuitionMediaOnly?: boolean }).tuitionMediaOnly) {
+      return false;
+    }
+
     // If no feature is required, always show the item
     if (!item.featureRequired) {
       return true;

@@ -146,3 +146,11 @@ export const LANGUAGE_ENDPOINTS = {
 export const ID_CARD_ENDPOINTS = {
   GET_ID_CARD: '/student/id-card',
 } as const;
+
+export const TUITION_ENDPOINTS = {
+  CREATE_REQUEST: '/student/tuition-requests',
+  GET_MY_REQUESTS: '/student/my-tuitions',
+  GET_POST_APPLICANTS: (id: number | string) => `/student/my-tuitions/${id}/applicants`,
+  SUBMIT_REVIEW: '/student/tutor-reviews',
+  SELECT_APPLICANT: (id: number | string) => `/student/my-tuitions/${id}/select`,
+} as const;
